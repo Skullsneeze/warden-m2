@@ -1,0 +1,50 @@
+version: '3.5'
+services:
+    db:
+        extends:
+            file: .warden/mysql/base.yml
+            service: db
+        image: ${WARDEN_ENV_NAME}/mysql
+    elasticsearch:
+        extends:
+            file: .warden/elasticsearch/base.yml
+            service: es
+        image: ${WARDEN_ENV_NAME}/elasticsearch
+    kibana:
+        extends:
+            file: .warden/kibana/base.yml
+            service: kibana
+        depends_on:
+            - elasticsearch
+    php-fpm:
+        extends:
+            file: .warden/php7/base.yml
+            service: php
+        image: ${WARDEN_ENV_NAME}/php-fpm
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.${WARDEN_ENV_NAME}-livereload.tls=true
+            - traefik.http.routers.${WARDEN_ENV_NAME}-livereload.priority=2
+            - traefik.http.routers.${WARDEN_ENV_NAME}-livereload.rule=
+                (HostRegexp(`{subdomain:.+}.${TRAEFIK_DOMAIN}`) || Host(`${TRAEFIK_DOMAIN}`))
+                && (Path(`/livereload.js`) || Path(`/livereload`))
+            - traefik.http.routers.${WARDEN_ENV_NAME}-livereload.service=${WARDEN_ENV_NAME}-livereload
+            - traefik.http.services.${WARDEN_ENV_NAME}-livereload.loadbalancer.server.port=35729
+    nginx:
+        extends:
+            file: .warden/nginx/base.yml
+            service: nginx
+        image: ${WARDEN_ENV_NAME}/nginx
+        depends_on:
+            - php-fpm
+    redis:
+        extends:
+            file: .warden/redis/base.yml
+            service: redis
+volumes:
+    nfsmount:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3
+            device: ":${PWD}"

@@ -1,0 +1,12 @@
+version: "3.5"
+
+services:
+  kibana:
+    image: kibana:${ELASTICSEARCH_VERSION}
+    labels:
+      - "traefik.enable=1"
+      - "traefik.http.routers.kibana-${WARDEN_ENV_NAME}.tls=true"
+      - "traefik.http.routers.kibana-${WARDEN_ENV_NAME}.rule=Host(`kibana.${TRAEFIK_DOMAIN}.test`)"
+      - "traefik.http.services.kibana-${WARDEN_ENV_NAME}.loadbalancer.server.port=5601"
+    environment:
+      SERVER_NAME: kibana.${TRAEFIK_DOMAIN}

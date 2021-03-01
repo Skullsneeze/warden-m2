@@ -1,0 +1,21 @@
+version: '3.5'
+services:
+  php:
+    user: ${USER}
+    volumes:
+      - nfsmount:/var/www/html
+      - ./conf/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+      - ./conf/sendmail.ini:/usr/local/etc/php/conf.d/sendmail.ini
+      - ./conf/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./conf/default.conf:/usr/local/etc/php-fpm.d/zzz-default.conf
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER: ${USER}
+        PHP_V: ${PHP_VERSION}
+    environment:
+      XDEBUG_CONFIG: "remote_host=127.0.0.1"
+      PHP_IDE_CONFIG: "serverName=${TRAEFIK_DOMAIN}"
+      MAILHOG_HOST: mailhog
+      MAILHOG_PORT: 1025
